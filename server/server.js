@@ -5,6 +5,8 @@ import morgan from "morgan";
 import connectDB from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 // Load environment variables
 dotenv.config();
 
@@ -31,6 +33,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 // Error handlers (must come AFTER all routes)
 app.use(notFound);
 app.use(errorHandler);
