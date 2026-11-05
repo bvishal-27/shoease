@@ -1,5 +1,5 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
@@ -7,8 +7,8 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 // Load environment variables
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -19,6 +19,7 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // parse JSON request bodies
 app.use(express.urlencoded({ extended: true }));
+
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -36,6 +37,7 @@ app.get("/api/health", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
 // Error handlers (must come AFTER all routes)
 app.use(notFound);
 app.use(errorHandler);

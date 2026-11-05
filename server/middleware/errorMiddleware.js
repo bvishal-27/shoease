@@ -31,6 +31,17 @@ export const errorHandler = (err, req, res, next) => {
     message = `${field} already exists`;
   }
 
+  // Multer errors (file too large, too many files)
+  if (err.name === "MulterError") {
+    statusCode = 400;
+    message = err.message;
+  }
+
+  // Our file filter error
+  if (err.message === "Only image files are allowed") {
+    statusCode = 400;
+  }
+
   res.status(statusCode).json({
     success: false,
     message,
