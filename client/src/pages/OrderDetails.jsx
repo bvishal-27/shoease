@@ -130,8 +130,12 @@ export default function OrderDetails() {
   }
 
   const shortId = order._id.slice(-8).toUpperCase();
-  const canCancel = order.status === "Processing" && !order.isPaid;
-  const canPay = isPayable(order);
+
+   // only the customer who placed the order can pay for it or cancel it
+  const isOwner = order.user?._id === user._id;
+  const canCancel = isOwner && order.status === "Processing" && !order.isPaid;
+  const canPay = isOwner && isPayable(order);
+
   const a = order.shippingAddress;
 
   return (

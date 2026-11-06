@@ -3,7 +3,8 @@ import { NavLink, Outlet } from "react-router-dom";
 const links = [
   { to: "/admin", label: "Dashboard", end: true },
   { to: "/admin/products", label: "Products" },
-  // Orders and Users are added in Part B
+  { to: "/admin/orders", label: "Orders" },
+  { to: "/admin/users", label: "Users" },
 ];
 
 export default function AdminLayout() {

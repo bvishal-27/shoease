@@ -13,3 +13,12 @@ export const formatDate = (date) =>
     month: "short",
     year: "numeric",
   });
+  // Badge style for an order status
+export const statusVariant = (status) => {
+  if (status === "Cancelled") return "destructive";
+  if (status === "Delivered") return "default";
+  return "secondary";
+};
+
+// "ab12cd34" style short id for display
+export const shortOrderId = (id) => id.slice(-8).toUpperCase();
