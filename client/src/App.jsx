@@ -11,6 +11,7 @@ import Profile from "@/pages/Profile";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/NotFound";
 import { fetchMe } from "@/redux/authSlice";
+import ProductDetails from "@/pages/ProductDetails";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -31,7 +32,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-
+<Route path="/product/:id" element={<ProductDetails />} />
           {/* any logged-in user */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
