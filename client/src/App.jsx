@@ -16,6 +16,9 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/NotFound";
 import { fetchMe } from "@/redux/authSlice";
 import { fetchCart } from "@/redux/cartSlice";
+import AdminLayout from "@/components/AdminLayout";
+import AdminProducts from "@/pages/admin/AdminProducts";
+import ProductForm from "@/pages/admin/ProductForm";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -54,8 +57,14 @@ export default function App() {
           </Route>
 
           {/* admins only */}
+                   {/* admins only */}
           <Route element={<ProtectedRoute adminOnly />}>
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/products/new" element={<ProductForm />} />
+              <Route path="/admin/products/:id/edit" element={<ProductForm />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />
