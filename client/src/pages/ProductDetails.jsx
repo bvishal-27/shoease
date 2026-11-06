@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -9,11 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import StarRating from "@/components/StarRating";
 import { getProductById, addReview } from "@/api/productApi";
+import { addToCart } from "@/redux/cartSlice";
 import { formatDate, formatPrice } from "@/lib/format";
 
 export default function ProductDetails() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
@@ -21,6 +24,10 @@ export default function ProductDetails() {
   const [notFound, setNotFound] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [reload, setReload] = useState(0); // bump to refetch after a review
+
+  // cart
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
 
   // review form
   const [rating, setRating] = useState(0);
@@ -52,9 +59,10 @@ export default function ProductDetails() {
     };
   }, [id, reload]);
 
-  // Show the first image again when we open a different product
+  // Reset image and quantity when we open a different product
   useEffect(() => {
     setActiveImage(0);
+    setQty(1);
   }, [id]);
 
   // If the user already reviewed this product, prefill the form so they can edit it
@@ -89,6 +97,27 @@ export default function ProductDetails() {
       setSubmitting(false);
     }
   };
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.info("Please log in to add items to your cart");
+      return navigate("/login", { state: { from: location.pathname } });
+    }
+
+    try {
+      setAdding(true);
+      await dispatch(addToCart({ productId: product._id, quantity: qty })).unwrap();
+      toast.success(`${qty} × ${product.name} added to cart`, {
+        action: { label: "View cart", onClick: () => navigate("/cart") },
+      });
+    } catch (err) {
+      toast.error(err?.message || "Could not add to cart");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // ---- early returns come AFTER all hooks and handlers ----
 
   if (loading) {
     return (
@@ -173,7 +202,9 @@ export default function ProductDetails() {
           </div>
 
           <p className="mt-4 text-3xl font-bold">{formatPrice(product.price)}</p>
-          <p className="text-xs text-muted-foreground">Inclusive of all taxes shown at checkout</p>
+          <p className="text-xs text-muted-foreground">
+            Shipping and tax are shown at checkout
+          </p>
 
           <div className="mt-4">
             {outOfStock ? (
@@ -189,14 +220,42 @@ export default function ProductDetails() {
             {product.description}
           </p>
 
-          <Button
-            size="lg"
-            className="mt-8 w-full md:w-auto"
-            disabled={outOfStock}
-            onClick={() => toast.info("Cart is built in Chapter 7")}
-          >
-            {outOfStock ? "Out of stock" : "Add to cart"}
-          </Button>
+          {/* Quantity + Add to cart */}
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            {!outOfStock && (
+              <div className="flex items-center rounded-md border">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={qty <= 1}
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </Button>
+                <span className="w-10 text-center font-medium">{qty}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={qty >= product.stock}
+                  onClick={() => setQty((q) => Math.min(product.stock, q + 1))}
+                  aria-label="Increase quantity"
+                >
+                  +
+                </Button>
+              </div>
+            )}
+
+            <Button
+              size="lg"
+              disabled={outOfStock || adding}
+              onClick={handleAddToCart}
+            >
+              {outOfStock ? "Out of stock" : adding ? "Adding..." : "Add to cart"}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { logout } from "@/redux/authSlice";
 
 export default function Navbar() {
   const { user } = useSelector((state) => state.auth);
+  const itemsCount = useSelector((state) => state.cart.itemsCount);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -22,10 +23,19 @@ export default function Navbar() {
           ShopEase
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Link to="/cart" className={buttonVariants({ variant: "ghost" })}>
+            Cart
+            {user && itemsCount > 0 && (
+              <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
+                {itemsCount}
+              </span>
+            )}
+          </Link>
+
           {user ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
+              <span className="hidden text-sm text-muted-foreground md:inline">
                 Hi, {user.name}
               </span>
               {user.role === "admin" && (

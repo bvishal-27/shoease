@@ -5,17 +5,21 @@ import { Toaster } from "@/components/ui/sonner";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Home from "@/pages/Home";
+import ProductDetails from "@/pages/ProductDetails";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Profile from "@/pages/Profile";
+import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import OrderDetails from "@/pages/OrderDetails";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/NotFound";
 import { fetchMe } from "@/redux/authSlice";
-import ProductDetails from "@/pages/ProductDetails";
+import { fetchCart } from "@/redux/cartSlice";
 
 export default function App() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user, checking } = useSelector((state) => state.auth);
 
   // On first load, verify the saved token with the server
   useEffect(() => {
@@ -25,17 +29,28 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load the cart once we know who the user is (after login or page refresh)
+  useEffect(() => {
+    if (user?._id && !checking) {
+      dispatch(fetchCart());
+    }
+  }, [user?._id, checking, dispatch]);
+
   return (
     <>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-<Route path="/product/:id" element={<ProductDetails />} />
+
           {/* any logged-in user */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order/:id" element={<OrderDetails />} />
           </Route>
 
           {/* admins only */}
