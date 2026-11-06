@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PriceSummary from "@/components/PriceSummary";
 import { getOrderById, cancelOrder } from "@/api/orderApi";
+import { payForOrder } from "@/lib/pay";
 import { formatDate, formatPrice } from "@/lib/format";
 
 const statusVariant = (status) => {
@@ -14,15 +16,25 @@ const statusVariant = (status) => {
   return "secondary";
 };
 
+// An online-payment order that is still waiting for payment
+const isPayable = (o) =>
+  o.paymentMethod === "Razorpay" && !o.isPaid && o.status === "Processing";
+
 export default function OrderDetails() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+
   const justPlaced = Boolean(location.state?.justPlaced);
+  const autoPay = Boolean(location.state?.autoPay);
+  const autoPayStarted = useRef(false);
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -44,6 +56,42 @@ export default function OrderDetails() {
       ignore = true;
     };
   }, [id]);
+
+  const handlePay = async () => {
+    try {
+      setPaying(true);
+      const result = await payForOrder(order, user);
+
+      if (result.status === "paid") {
+        // keep the rest of the order (it has the populated user) and update payment info
+        setOrder((prev) => ({
+          ...prev,
+          isPaid: result.order.isPaid,
+          paidAt: result.order.paidAt,
+          paymentResult: result.order.paymentResult,
+        }));
+        toast.success("Payment successful!");
+      }
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || err.message || "Payment could not be completed"
+      );
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  // Right after checkout with Razorpay: open the payment popup once
+  useEffect(() => {
+    if (!order || !autoPay || autoPayStarted.current) return;
+    autoPayStarted.current = true;
+
+    // remove autoPay from the history entry so a refresh doesn't reopen the popup
+    navigate(location.pathname, { replace: true, state: { justPlaced: true } });
+
+    if (isPayable(order)) handlePay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order]);
 
   const handleCancel = async () => {
     if (!window.confirm("Cancel this order?")) return;
@@ -83,15 +131,23 @@ export default function OrderDetails() {
 
   const shortId = order._id.slice(-8).toUpperCase();
   const canCancel = order.status === "Processing" && !order.isPaid;
+  const canPay = isPayable(order);
   const a = order.shippingAddress;
 
   return (
     <div>
       {justPlaced && (
         <div className="mb-6 rounded-xl border border-green-600/30 bg-green-600/10 p-6 text-center">
-          <h1 className="text-2xl font-bold">Thank you! Your order is placed 🎉</h1>
+          <h1 className="text-2xl font-bold">
+            {order.isPaid
+              ? "Payment successful! Your order is placed 🎉"
+              : "Thank you! Your order is placed 🎉"}
+          </h1>
           <p className="mt-1 text-muted-foreground">
-            Order #{shortId}. You can track it on this page.
+            Order #{shortId}.{" "}
+            {canPay
+              ? "Complete the payment below to confirm it."
+              : "You can track it on this page."}
           </p>
         </div>
       )}
@@ -149,15 +205,30 @@ export default function OrderDetails() {
           <div className="rounded-xl border bg-card p-6">
             <h3 className="mb-3 font-bold">Payment</h3>
             <p className="text-sm">
-              {order.paymentMethod === "COD" ? "Cash on delivery" : "Razorpay"}
+              {order.paymentMethod === "COD" ? "Cash on delivery" : "Razorpay (online)"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {order.isPaid ? `Paid on ${formatDate(order.paidAt)}` : "Not paid yet"}
             </p>
+            {order.paymentResult?.razorpay_payment_id && (
+              <p className="mt-1 break-all text-xs text-muted-foreground">
+                Payment ID: {order.paymentResult.razorpay_payment_id}
+              </p>
+            )}
             {order.deliveredAt && (
               <p className="mt-1 text-sm text-muted-foreground">
                 Delivered on {formatDate(order.deliveredAt)}
               </p>
+            )}
+
+            {canPay && (
+              <Button
+                className="mt-4 w-full"
+                onClick={handlePay}
+                disabled={paying || cancelling}
+              >
+                {paying ? "Processing..." : `Pay ${formatPrice(order.totalPrice)} now`}
+              </Button>
             )}
           </div>
 
@@ -171,7 +242,7 @@ export default function OrderDetails() {
               variant="outline"
               className="w-full text-destructive"
               onClick={handleCancel}
-              disabled={cancelling}
+              disabled={cancelling || paying}
             >
               {cancelling ? "Cancelling..." : "Cancel order"}
             </Button>

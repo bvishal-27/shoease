@@ -21,7 +21,7 @@ const METHODS = [
   {
     value: "Razorpay",
     title: "Pay online (Razorpay)",
-    desc: "Cards, UPI and netbanking. Payment is connected in Chapter 8",
+    desc: "Cards, UPI and netbanking.  You pay in a secure popup",
   },
 ];
 
@@ -97,7 +97,7 @@ export default function Checkout() {
       toast.success("Order placed!");
       navigate(`/order/${order._id}`, {
         replace: true,
-        state: { justPlaced: true },
+        state: { justPlaced: true, autoPay: paymentMethod === "Razorpay" },
       });
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not place order");
@@ -227,10 +227,10 @@ export default function Checkout() {
               ))}
             </div>
 
-            {paymentMethod === "Razorpay" && (
+                        {paymentMethod === "Razorpay" && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Online payment is added in the next chapter. For now this order will
-                be saved as unpaid, and you can cancel it from the order page.
+                The payment popup opens right after you place the order. If you close
+                it, you can pay later from the order page.
               </p>
             )}
           </section>
