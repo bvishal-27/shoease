@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { logout } from "@/redux/authSlice";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const { user } = useSelector((state) => state.auth);
@@ -24,6 +25,7 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          <ThemeToggle />
           <Link to="/cart" className={buttonVariants({ variant: "ghost" })}>
             Cart
             {user && itemsCount > 0 && (
