@@ -21,6 +21,7 @@ import AdminProducts from "@/pages/admin/AdminProducts";
 import ProductForm from "@/pages/admin/ProductForm";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import MyOrders from "@/pages/MyOrders";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order/:id" element={<OrderDetails />} />
+                        <Route path="/orders" element={<MyOrders />} />
           </Route>
 
           {/* admins only */}

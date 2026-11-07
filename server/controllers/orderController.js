@@ -3,6 +3,8 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { calcPrices } from "../utils/calcPrices.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { orderConfirmationEmail } from "../utils/emailTemplates.js";
 
 // Puts the items of an order back into stock (used when cancelling)
 const restoreStock = async (order) => {
@@ -94,6 +96,11 @@ export const createOrder = asyncHandler(async (req, res) => {
   cart.items = [];
   await cart.save();
 
+  // 6. Confirmation email (not awaited: the response does not wait for it)
+  sendEmail({ to: req.user.email, ...orderConfirmationEmail(order, req.user) });
+
+
+  
   res.status(201).json({ success: true, order });
 });
 

@@ -45,6 +45,9 @@ export default function Navbar() {
                   Admin
                 </Link>
               )}
+                            <Link to="/orders" className={buttonVariants({ variant: "ghost" })}>
+                My Orders
+              </Link>
               <Link to="/profile" className={buttonVariants({ variant: "ghost" })}>
                 Profile
               </Link>

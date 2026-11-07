@@ -2,6 +2,8 @@ import crypto from "crypto";
 import Order from "../models/Order.js";
 import razorpay from "../config/razorpay.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { paymentReceivedEmail } from "../utils/emailTemplates.js";
 
 // Loads an order and makes sure it belongs to the logged-in user
 const getMyOrder = async (orderId, req, res) => {
@@ -129,5 +131,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   };
   await order.save();
 
+  sendEmail({ to: req.user.email, ...paymentReceivedEmail(order, req.user) });
+  
   res.status(200).json({ success: true, order });
 });
